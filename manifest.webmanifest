@@ -1,0 +1,9 @@
+{
+  "name": "Foto para PDF",
+  "short_name": "Foto PDF",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f4ee",
+  "theme_color": "#0b6b55",
+  "description": "Transforma uma foto em PDF e compartilha pelo celular."
+}

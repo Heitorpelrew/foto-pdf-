@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b6b55">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>Foto para PDF</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f4ee;
+      --ink: #1d2520;
+      --muted: #5c665f;
+      --line: #cfc8b9;
+      --accent: #0b6b55;
+      --accent-dark: #075340;
+      --danger: #9c2f2f;
+      --panel: #fffdf8;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(920px, 100%);
+      margin: 0 auto;
+      padding: 28px 18px 36px;
+    }
+
+    header {
+      padding: 12px 0 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(34px, 8vw, 64px);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 22px;
+      line-height: 1.35;
+    }
+
+    .tool {
+      display: grid;
+      gap: 18px;
+      padding: 20px;
+      background: var(--panel);
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(20, 20, 20, 0.08);
+    }
+
+    .file-row {
+      display: grid;
+      gap: 14px;
+    }
+
+    input[type="file"] {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    .choose {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 104px;
+      width: 100%;
+      padding: 22px;
+      border: 3px solid var(--accent);
+      border-radius: 8px;
+      background: #eaf4ef;
+      color: var(--accent-dark);
+      font-size: 32px;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .choose:focus-within,
+    .choose:hover {
+      background: #dceee6;
+    }
+
+    .status {
+      min-height: 34px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1.35;
+    }
+
+    .support {
+      margin: 0;
+      padding: 14px 16px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: #eef7f2;
+      color: var(--ink);
+      font-size: 20px;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .support.warn {
+      background: #fff7dc;
+    }
+
+    .preview-wrap {
+      display: none;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .preview-wrap.show {
+      display: grid;
+    }
+
+    .preview {
+      width: 100%;
+      max-height: 46vh;
+      object-fit: contain;
+      border: 2px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .result {
+      display: grid;
+      gap: 12px;
+      padding-top: 4px;
+    }
+
+    .result-title {
+      margin: 6px 0 0;
+      color: var(--ink);
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .notice {
+      display: none;
+      margin: 0;
+      padding: 16px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: #fff7dc;
+      color: var(--ink);
+      font-size: 22px;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .notice.show {
+      display: block;
+    }
+
+    .pdf-frame {
+      display: none;
+      width: 100%;
+      height: min(70vh, 720px);
+      min-height: 420px;
+      border: 2px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    .pdf-frame.show {
+      display: block;
+    }
+
+    button,
+    .big-link {
+      min-height: 76px;
+      border: 0;
+      border-radius: 8px;
+      padding: 18px 20px;
+      font: inherit;
+      font-size: 28px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .primary,
+    .big-link.primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .primary:hover:not(:disabled),
+    .big-link.primary:hover {
+      background: var(--accent-dark);
+    }
+
+    .secondary,
+    .big-link.secondary {
+      background: #ece7db;
+      color: var(--ink);
+      border: 2px solid var(--line);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .big-link.disabled {
+      pointer-events: none;
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    @media (min-width: 720px) {
+      main {
+        padding-top: 44px;
+      }
+
+      .tool {
+        gap: 22px;
+        padding: 28px;
+      }
+
+      .actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Foto para PDF</h1>
+      <p class="sub">Escolha uma foto. Depois aperte o botão verde.</p>
+    </header>
+
+    <section class="tool" aria-label="Transformar foto em PDF">
+      <div class="file-row">
+        <label class="choose" for="photoInput">Escolher foto</label>
+        <input id="photoInput" type="file" accept="image/*">
+        <p id="status" class="status">Nenhuma foto escolhida ainda.</p>
+        <p id="supportText" class="support">No celular, abra no Chrome, Safari ou Samsung Internet.</p>
+      </div>
+
+      <div id="previewWrap" class="preview-wrap">
+        <img id="preview" class="preview" alt="Prévia da foto escolhida">
+      </div>
+
+      <div class="actions">
+        <button id="downloadBtn" class="primary" type="button" disabled>Transformar em PDF</button>
+        <button id="shareWhatsappBtn" class="primary" type="button" disabled>Compartilhar no WhatsApp</button>
+        <button id="clearBtn" class="secondary" type="button" disabled>Trocar foto</button>
+      </div>
+
+      <div id="resultWrap" class="result" aria-live="polite">
+        <p class="result-title">PDF pronto:</p>
+        <p id="notice" class="notice">Aperte Compartilhar no WhatsApp e escolha o contato. Se o navegador não permitir, use Salvar PDF.</p>
+        <a id="openPdfLink" class="big-link secondary" href="#">Abrir PDF</a>
+        <a id="downloadPdfLink" class="big-link secondary" href="#" download="foto.pdf">Salvar PDF</a>
+        <iframe id="pdfFrame" class="pdf-frame" title="PDF criado"></iframe>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const input = document.getElementById('photoInput');
+    const statusText = document.getElementById('status');
+    const supportText = document.getElementById('supportText');
+    const previewWrap = document.getElementById('previewWrap');
+    const preview = document.getElementById('preview');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const resultWrap = document.getElementById('resultWrap');
+    const shareWhatsappBtn = document.getElementById('shareWhatsappBtn');
+    const openPdfLink = document.getElementById('openPdfLink');
+    const downloadPdfLink = document.getElementById('downloadPdfLink');
+    const pdfFrame = document.getElementById('pdfFrame');
+    const notice = document.getElementById('notice');
+
+    let selectedFile = null;
+    let imageDataUrl = '';
+    let imageBitmap = null;
+    let currentPdfUrl = '';
+    let currentPdfFile = null;
+
+    setResultReady(false);
+    updateShareSupportMessage();
+
+    input.addEventListener('change', async () => {
+      const file = input.files && input.files[0];
+      clearMessage();
+
+      if (!file) {
+        resetAll();
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        showError('Isso não parece ser uma foto. Escolha uma imagem.');
+        resetAll(false);
+        return;
+      }
+
+      try {
+        selectedFile = file;
+        imageDataUrl = await readFileAsDataUrl(file);
+        imageBitmap = await loadImage(imageDataUrl);
+        preview.src = imageDataUrl;
+        previewWrap.classList.add('show');
+        hidePdfResult();
+        downloadBtn.disabled = false;
+        clearBtn.disabled = false;
+        statusText.textContent = `Foto pronta: ${file.name}`;
+      } catch (error) {
+        showError('Não consegui abrir essa foto. Tente outra imagem.');
+        resetAll(false);
+      }
+    });
+
+    downloadBtn.addEventListener('click', async () => {
+      if (!selectedFile || !imageBitmap) return;
+
+      try {
+        downloadBtn.disabled = true;
+        downloadBtn.textContent = 'Preparando...';
+        statusText.textContent = 'Criando o PDF...';
+
+        const jpeg = imageToJpegBytes(imageBitmap);
+        const pdf = makePdf(jpeg.bytes, jpeg.width, jpeg.height);
+        const name = cleanFileName(selectedFile.name.replace(/\.[^.]+$/, '')) || 'foto';
+        showPdfResult(pdf, `${name}.pdf`);
+
+        statusText.textContent = 'PDF pronto. Aperte Compartilhar no WhatsApp.';
+      } catch (error) {
+        showError('Não consegui criar o PDF. Tente com uma foto menor.');
+      } finally {
+        downloadBtn.disabled = false;
+        downloadBtn.textContent = 'Transformar em PDF';
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      resetAll();
+      input.click();
+    });
+
+    openPdfLink.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (currentPdfUrl) {
+        window.location.assign(currentPdfUrl);
+      }
+    });
+
+    shareWhatsappBtn.addEventListener('click', async () => {
+      if (!currentPdfFile) {
+        showError('Primeiro escolha a foto e aperte Transformar em PDF.');
+        return;
+      }
+
+      statusText.textContent = 'Abrindo compartilhamento...';
+      const result = await sharePdfFile(currentPdfFile);
+      if (result === 'shared') {
+        statusText.textContent = 'Compartilhamento aberto.';
+        return;
+      }
+      if (result === 'cancelled') {
+        statusText.textContent = 'Compartilhamento cancelado.';
+        return;
+      }
+
+      showError(getShareFallbackMessage());
+    });
+
+    async function sharePdfFile(file) {
+      if (!navigator.share) {
+        return 'unsupported';
+      }
+
+      const shareData = {
+        files: [file],
+        title: 'Foto em PDF',
+        text: 'Segue o PDF.'
+      };
+
+      if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+        return 'unsupported';
+      }
+
+      try {
+        await navigator.share(shareData);
+        return 'shared';
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          return 'cancelled';
+        }
+        return 'unsupported';
+      }
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
+    function imageToJpegBytes(img) {
+      const maxSide = 2200;
+      const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+      const width = Math.max(1, Math.round(img.naturalWidth * scale));
+      const height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      const base64 = dataUrl.split(',')[1];
+      return { bytes: base64ToBytes(base64), width, height };
+    }
+
+    function makePdf(jpegBytes, imgWidth, imgHeight) {
+      const encoder = new TextEncoder();
+      const objects = [];
+      const maxPageSide = 900;
+      const minPageSide = 220;
+      const aspect = imgWidth / imgHeight;
+      let pageWidth;
+      let pageHeight;
+
+      if (aspect >= 1) {
+        pageWidth = maxPageSide;
+        pageHeight = Math.max(minPageSide, maxPageSide / aspect);
+      } else {
+        pageHeight = maxPageSide;
+        pageWidth = Math.max(minPageSide, maxPageSide * aspect);
+      }
+
+      pageWidth = round2(pageWidth);
+      pageHeight = round2(pageHeight);
+
+      objects[1] = encoder.encode('<< /Type /Catalog /Pages 2 0 R >>');
+      objects[2] = encoder.encode('<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+      objects[3] = encoder.encode(
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] ` +
+        '/Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>'
+      );
+      objects[4] = [
+        encoder.encode(
+          `<< /Type /XObject /Subtype /Image /Width ${imgWidth} /Height ${imgHeight} ` +
+          `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`
+        ),
+        jpegBytes,
+        encoder.encode('\nendstream')
+      ];
+
+      const commands = `q\n${pageWidth} 0 0 ${pageHeight} 0 0 cm\n/Im0 Do\nQ\n`;
+      const commandBytes = encoder.encode(commands);
+      objects[5] = [
+        encoder.encode(`<< /Length ${commandBytes.length} >>\nstream\n`),
+        commandBytes,
+        encoder.encode('endstream')
+      ];
+
+      const parts = [encoder.encode('%PDF-1.4\n%easy-photo-pdf\n')];
+      const offsets = [0];
+      let position = byteLength(parts);
+
+      for (let i = 1; i < objects.length; i += 1) {
+        offsets[i] = position;
+        const header = encoder.encode(`${i} 0 obj\n`);
+        const footer = encoder.encode('\nendobj\n');
+        parts.push(header);
+        pushObject(parts, objects[i]);
+        parts.push(footer);
+        position = byteLength(parts);
+      }
+
+      const xrefStart = position;
+      let xref = `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+      for (let i = 1; i < objects.length; i += 1) {
+        xref += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+      }
+      xref += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+      parts.push(encoder.encode(xref));
+
+      return new Blob(parts, { type: 'application/pdf' });
+    }
+
+    function pushObject(parts, object) {
+      if (Array.isArray(object)) {
+        object.forEach(part => parts.push(part));
+      } else {
+        parts.push(object);
+      }
+    }
+
+    function byteLength(parts) {
+      return parts.reduce((total, part) => total + part.length, 0);
+    }
+
+    function base64ToBytes(base64) {
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    function showPdfResult(blob, name) {
+      hidePdfResult();
+      currentPdfUrl = URL.createObjectURL(blob);
+      currentPdfFile = new File([blob], name, { type: 'application/pdf' });
+      openPdfLink.href = currentPdfUrl;
+      downloadPdfLink.href = currentPdfUrl;
+      downloadPdfLink.download = name;
+      pdfFrame.src = currentPdfUrl;
+      pdfFrame.classList.add('show');
+      notice.classList.add('show');
+      setResultReady(true);
+      updateShareSupportMessage();
+    }
+
+    function hidePdfResult() {
+      if (currentPdfUrl) {
+        URL.revokeObjectURL(currentPdfUrl);
+        currentPdfUrl = '';
+      }
+      currentPdfFile = null;
+      openPdfLink.removeAttribute('href');
+      downloadPdfLink.removeAttribute('href');
+      pdfFrame.removeAttribute('src');
+      pdfFrame.classList.remove('show');
+      notice.classList.remove('show');
+      setResultReady(false);
+    }
+
+    function setResultReady(isReady) {
+      shareWhatsappBtn.disabled = !isReady;
+      toggleLink(openPdfLink, isReady);
+      toggleLink(downloadPdfLink, isReady);
+    }
+
+    function toggleLink(link, isReady) {
+      link.classList.toggle('disabled', !isReady);
+      link.setAttribute('aria-disabled', String(!isReady));
+    }
+
+    function cleanFileName(name) {
+      return name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9_-]+/gi, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 80);
+    }
+
+    function round2(number) {
+      return Math.round(number * 100) / 100;
+    }
+
+    function showError(message) {
+      statusText.textContent = message;
+      statusText.classList.add('error');
+    }
+
+    function clearMessage() {
+      statusText.classList.remove('error');
+    }
+
+    function resetAll(resetInput = true) {
+      selectedFile = null;
+      imageDataUrl = '';
+      imageBitmap = null;
+      hidePdfResult();
+      preview.removeAttribute('src');
+      previewWrap.classList.remove('show');
+      downloadBtn.disabled = true;
+      clearBtn.disabled = true;
+      clearMessage();
+      statusText.textContent = 'Nenhuma foto escolhida ainda.';
+      if (resetInput) input.value = '';
+    }
+
+    function updateShareSupportMessage() {
+      supportText.classList.remove('warn');
+
+      if (!window.isSecureContext) {
+        supportText.textContent = 'Para compartilhar direto no celular, abra esta pagina em HTTPS.';
+        supportText.classList.add('warn');
+        return;
+      }
+
+      if (!navigator.share) {
+        supportText.textContent = 'Este navegador nao tem compartilhamento direto. Use Chrome, Safari ou Samsung Internet no celular.';
+        supportText.classList.add('warn');
+        return;
+      }
+
+      if (currentPdfFile && navigator.canShare && !navigator.canShare({ files: [currentPdfFile] })) {
+        supportText.textContent = 'Este navegador compartilha texto, mas nao aceita PDF. Use Salvar PDF.';
+        supportText.classList.add('warn');
+        return;
+      }
+
+      supportText.textContent = 'No celular, o botao Compartilhar abre o WhatsApp para escolher qualquer contato.';
+    }
+
+    function getShareFallbackMessage() {
+      if (!window.isSecureContext) {
+        return 'O celular bloqueou porque a pagina nao esta em HTTPS. Use Salvar PDF ou abra a ferramenta em HTTPS.';
+      }
+
+      return 'Este navegador nao compartilha PDF direto. Aperte Salvar PDF e envie pelo WhatsApp.';
+    }
+  </script>
+</body>
+</html>
