@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#155b4b">
+  <title>Contrato Falado</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f2ed;
+      --panel: #fffdf8;
+      --ink: #17231d;
+      --muted: #59665f;
+      --line: #ccc5b8;
+      --accent: #155b4b;
+      --accent-dark: #0f4438;
+      --warn: #9c2f2f;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(980px, 100%);
+      margin: 0 auto;
+      padding: 28px 18px 42px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(36px, 8vw, 68px);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 22px;
+      line-height: 1.35;
+    }
+
+    .tool {
+      display: grid;
+      gap: 18px;
+      padding: 20px;
+      background: var(--panel);
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(20, 20, 20, 0.08);
+    }
+
+    .status,
+    .notice {
+      margin: 0;
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1.35;
+    }
+
+    .notice {
+      padding: 14px 16px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: #eef7f2;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .notice.warn,
+    .status.error {
+      color: var(--warn);
+      background: #fff7dc;
+      font-weight: 700;
+    }
+
+    .voice-row,
+    .actions {
+      display: grid;
+      gap: 12px;
+    }
+
+    button,
+    .big-link {
+      min-height: 76px;
+      border: 0;
+      border-radius: 8px;
+      padding: 18px 20px;
+      font: inherit;
+      font-size: 26px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .primary,
+    .big-link.primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .primary:hover:not(:disabled),
+    .big-link.primary:hover {
+      background: var(--accent-dark);
+    }
+
+    .secondary,
+    .big-link.secondary {
+      background: #ebe6db;
+      color: var(--ink);
+      border: 2px solid var(--line);
+    }
+
+    button:disabled,
+    .big-link.disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--ink);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    textarea,
+    input {
+      width: 100%;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-size: 22px;
+    }
+
+    textarea {
+      min-height: 132px;
+      resize: vertical;
+      line-height: 1.35;
+    }
+
+    .fields {
+      display: grid;
+      gap: 14px;
+    }
+
+    .pdf-frame {
+      display: none;
+      width: 100%;
+      height: min(70vh, 720px);
+      min-height: 420px;
+      border: 2px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    .pdf-frame.show {
+      display: block;
+    }
+
+    @media (min-width: 760px) {
+      main {
+        padding-top: 44px;
+      }
+
+      .tool {
+        padding: 28px;
+      }
+
+      .fields {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      label.full,
+      .actions,
+      .voice-row {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Contrato Falado</h1>
+    <p class="sub">Fale ou digite o combinado. O sistema monta um contrato simples em PDF para assinar.</p>
+
+    <section class="tool" aria-label="Gerador de contrato">
+      <p id="supportText" class="notice">No Android, use o botao Falar. No iPhone, se o botao nao ouvir, toque no texto e use o microfone do teclado.</p>
+
+      <div class="voice-row">
+        <button id="listenBtn" class="primary" type="button">Falar contrato</button>
+        <label class="full" for="spokenText">
+          Texto falado ou digitado
+          <textarea id="spokenText" placeholder="Ex: contrato de pintura, cliente João, prestador Carlos, R$ 900, entrega sexta, metade agora e metade no final"></textarea>
+        </label>
+        <button id="fillBtn" class="secondary" type="button">Preencher campos pelo texto</button>
+      </div>
+
+      <div class="fields">
+        <label for="providerName">
+          Nome do prestador
+          <input id="providerName" autocomplete="name" placeholder="Quem vai fazer o serviço">
+        </label>
+
+        <label for="clientName">
+          Nome do cliente
+          <input id="clientName" autocomplete="name" placeholder="Quem contratou">
+        </label>
+
+        <label for="serviceName" class="full">
+          Serviço combinado
+          <input id="serviceName" placeholder="Ex: pintura da sala e dos quartos">
+        </label>
+
+        <label for="price">
+          Valor
+          <input id="price" inputmode="decimal" placeholder="Ex: R$ 900">
+        </label>
+
+        <label for="payment">
+          Pagamento
+          <input id="payment" placeholder="Ex: metade agora e metade no final">
+        </label>
+
+        <label for="deadline">
+          Prazo de entrega
+          <input id="deadline" placeholder="Ex: sexta-feira">
+        </label>
+
+        <label for="place">
+          Local do serviço
+          <input id="place" placeholder="Endereço ou cidade">
+        </label>
+
+        <label for="notes" class="full">
+          Observações
+          <textarea id="notes" placeholder="Materiais, garantia, detalhes do combinado"></textarea>
+        </label>
+      </div>
+
+      <p id="statusText" class="status">Preencha os campos e aperte Gerar contrato PDF.</p>
+
+      <div class="actions">
+        <button id="generateBtn" class="primary" type="button">Gerar contrato PDF</button>
+        <button id="shareBtn" class="primary" type="button" disabled>Compartilhar no WhatsApp</button>
+        <a id="downloadLink" class="big-link secondary disabled" href="#" download="contrato.pdf" aria-disabled="true">Salvar PDF</a>
+        <a id="openLink" class="big-link secondary disabled" href="#" aria-disabled="true">Abrir PDF</a>
+        <button id="clearBtn" class="secondary" type="button">Limpar</button>
+      </div>
+
+      <iframe id="pdfFrame" class="pdf-frame" title="Contrato em PDF"></iframe>
+    </section>
+  </main>
+
+  <script>
+    const listenBtn = document.getElementById('listenBtn');
+    const spokenText = document.getElementById('spokenText');
+    const fillBtn = document.getElementById('fillBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const downloadLink = document.getElementById('downloadLink');
+    const openLink = document.getElementById('openLink');
+    const clearBtn = document.getElementById('clearBtn');
+    const statusText = document.getElementById('statusText');
+    const supportText = document.getElementById('supportText');
+    const pdfFrame = document.getElementById('pdfFrame');
+
+    const fields = {
+      provider: document.getElementById('providerName'),
+      client: document.getElementById('clientName'),
+      service: document.getElementById('serviceName'),
+      price: document.getElementById('price'),
+      payment: document.getElementById('payment'),
+      deadline: document.getElementById('deadline'),
+      place: document.getElementById('place'),
+      notes: document.getElementById('notes')
+    };
+
+    let recognition = null;
+    let currentPdfUrl = '';
+    let currentPdfFile = null;
+
+    setupSpeech();
+    setPdfReady(false);
+    updateSupportMessage();
+
+    listenBtn.addEventListener('click', () => {
+      clearMessage();
+
+      if (!recognition) {
+        showError('Este navegador nao reconhece voz pelo botao. Toque no campo de texto e use o microfone do teclado.');
+        spokenText.focus();
+        return;
+      }
+
+      try {
+        listenBtn.disabled = true;
+        listenBtn.textContent = 'Ouvindo...';
+        statusText.textContent = 'Fale o contrato agora.';
+        recognition.start();
+      } catch (error) {
+        listenBtn.disabled = false;
+        listenBtn.textContent = 'Falar contrato';
+        showError('Nao consegui iniciar o microfone. Tente de novo ou digite.');
+      }
+    });
+
+    fillBtn.addEventListener('click', () => {
+      fillFromText(spokenText.value);
+    });
+
+    generateBtn.addEventListener('click', () => {
+      clearMessage();
+
+      if (!fields.client.value.trim() || !fields.service.value.trim() || !fields.price.value.trim()) {
+        showError('Preencha pelo menos cliente, serviço e valor.');
+        return;
+      }
+
+      const name = cleanFileName(`contrato-${fields.client.value}`) || 'contrato';
+      const blob = makeContractPdf(getContractData());
+      showPdf(blob, `${name}.pdf`);
+      statusText.textContent = 'Contrato pronto. Agora pode salvar ou compartilhar no WhatsApp.';
+    });
+
+    shareBtn.addEventListener('click', async () => {
+      if (!currentPdfFile) {
+        showError('Primeiro gere o contrato PDF.');
+        return;
+      }
+
+      statusText.textContent = 'Abrindo compartilhamento...';
+      const result = await sharePdf(currentPdfFile);
+
+      if (result === 'shared') {
+        statusText.textContent = 'Escolha o WhatsApp e o contato.';
+        return;
+      }
+
+      if (result === 'cancelled') {
+        statusText.textContent = 'Compartilhamento cancelado.';
+        return;
+      }
+
+      showError(getShareFallbackMessage());
+    });
+
+    openLink.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (currentPdfUrl) {
+        window.location.assign(currentPdfUrl);
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      spokenText.value = '';
+      Object.values(fields).forEach(field => {
+        field.value = '';
+      });
+      clearPdf();
+      clearMessage();
+      statusText.textContent = 'Preencha os campos e aperte Gerar contrato PDF.';
+      spokenText.focus();
+    });
+
+    function setupSpeech() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        recognition = null;
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.lang = 'pt-BR';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.addEventListener('result', (event) => {
+        const text = event.results[0][0].transcript;
+        spokenText.value = spokenText.value ? `${spokenText.value}\n${text}` : text;
+        fillFromText(spokenText.value);
+        statusText.textContent = 'Texto ouvido. Confira os campos antes de gerar.';
+      });
+
+      recognition.addEventListener('end', () => {
+        listenBtn.disabled = false;
+        listenBtn.textContent = 'Falar contrato';
+      });
+
+      recognition.addEventListener('error', () => {
+        listenBtn.disabled = false;
+        listenBtn.textContent = 'Falar contrato';
+        showError('Nao consegui ouvir. Verifique o microfone ou digite o texto.');
+      });
+    }
+
+    function fillFromText(text) {
+      const clean = normalizeSpaces(text);
+      if (!clean) {
+        showError('Fale ou digite o contrato primeiro.');
+        return;
+      }
+
+      setIfEmpty(fields.service, matchAfter(clean, ['contrato de', 'servico de', 'serviço de'], ['cliente', 'prestador', 'valor', 'r$', 'por']));
+      setIfEmpty(fields.client, matchAfter(clean, ['cliente', 'contratante'], ['prestador', 'valor', 'r$', 'entrega', 'prazo', 'pagamento']));
+      setIfEmpty(fields.provider, matchAfter(clean, ['prestador', 'contratado'], ['cliente', 'valor', 'r$', 'entrega', 'prazo', 'pagamento']));
+      setIfEmpty(fields.price, matchPrice(clean));
+      setIfEmpty(fields.deadline, matchAfter(clean, ['entrega', 'prazo', 'termina', 'terminar ate', 'terminar até'], ['pagamento', 'local', 'endereco', 'endereço', 'observacao', 'observação']));
+      setIfEmpty(fields.payment, matchAfter(clean, ['pagamento', 'pagar', 'receber'], ['entrega', 'prazo', 'local', 'endereco', 'endereço']));
+      setIfEmpty(fields.place, matchAfter(clean, ['local', 'endereco', 'endereço'], ['pagamento', 'entrega', 'prazo', 'observacao', 'observação']));
+
+      if (!fields.notes.value.trim()) {
+        fields.notes.value = clean;
+      }
+
+      clearMessage();
+      statusText.textContent = 'Campos preenchidos. Confira e ajuste se precisar.';
+    }
+
+    function matchAfter(text, starters, enders) {
+      const lower = removeAccents(text.toLowerCase());
+      const normalizedStarters = starters.map(removeAccents);
+      const normalizedEnders = enders.map(removeAccents);
+
+      for (const starter of normalizedStarters) {
+        const start = lower.indexOf(starter);
+        if (start === -1) continue;
+
+        let from = start + starter.length;
+        while (text[from] === ':' || text[from] === '-' || text[from] === ',') from += 1;
+
+        let end = text.length;
+        for (const marker of normalizedEnders) {
+          const found = lower.indexOf(marker, from);
+          if (found !== -1 && found < end) {
+            end = found;
+          }
+        }
+
+        return trimPunctuation(text.slice(from, end));
+      }
+
+      return '';
+    }
+
+    function matchPrice(text) {
+      const byCurrency = text.match(/r\$\s*[\d.,]+/i);
+      if (byCurrency) return byCurrency[0].toUpperCase();
+
+      const byNumber = text.match(/\b\d{2,}([.,]\d{2})?\s*(reais|real)?\b/i);
+      return byNumber ? trimPunctuation(byNumber[0]) : '';
+    }
+
+    function getContractData() {
+      return {
+        provider: fields.provider.value.trim() || '________________________________',
+        client: fields.client.value.trim(),
+        service: fields.service.value.trim(),
+        price: fields.price.value.trim(),
+        payment: fields.payment.value.trim() || 'conforme combinado entre as partes',
+        deadline: fields.deadline.value.trim() || 'conforme combinado entre as partes',
+        place: fields.place.value.trim() || 'conforme combinado entre as partes',
+        notes: fields.notes.value.trim() || 'Sem observacoes adicionais.',
+        date: new Date().toLocaleDateString('pt-BR')
+      };
+    }
+
+    function makeContractPdf(data) {
+      const lines = [
+        'CONTRATO SIMPLES DE PRESTACAO DE SERVICO',
+        '',
+        `Data: ${data.date}`,
+        '',
+        `Prestador: ${data.provider}`,
+        `Cliente: ${data.client}`,
+        '',
+        '1. SERVICO',
+        `O prestador se compromete a realizar o seguinte servico: ${data.service}.`,
+        '',
+        '2. VALOR',
+        `O valor combinado pelo servico e de ${data.price}.`,
+        '',
+        '3. FORMA DE PAGAMENTO',
+        `A forma de pagamento combinada foi: ${data.payment}.`,
+        '',
+        '4. PRAZO',
+        `O prazo combinado para entrega ou conclusao e: ${data.deadline}.`,
+        '',
+        '5. LOCAL',
+        `O local do servico e: ${data.place}.`,
+        '',
+        '6. OBSERVACOES',
+        data.notes,
+        '',
+        'As partes declaram que leram, entenderam e concordam com este contrato simples.',
+        '',
+        '',
+        '________________________________________',
+        'Assinatura do prestador',
+        '',
+        '',
+        '________________________________________',
+        'Assinatura do cliente'
+      ];
+
+      return makeTextPdf(lines);
+    }
+
+    function makeTextPdf(lines) {
+      const encoder = new TextEncoder();
+      const pageWidth = 595;
+      const pageHeight = 842;
+      const margin = 56;
+      const fontSize = 12;
+      const lineHeight = 17;
+      const maxChars = 82;
+      const pages = paginate(lines, maxChars, Math.floor((pageHeight - margin * 2) / lineHeight));
+      const objects = [];
+      const kids = [];
+
+      objects[1] = encoder.encode('<< /Type /Catalog /Pages 2 0 R >>');
+
+      let objectId = 3;
+      pages.forEach((pageLines) => {
+        const pageId = objectId;
+        const contentId = objectId + 1;
+        kids.push(`${pageId} 0 R`);
+
+        objects[pageId] = encoder.encode(
+          `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] ` +
+          `/Resources << /Font << /F1 ${3 + pages.length * 2} 0 R >> >> /Contents ${contentId} 0 R >>`
+        );
+
+        const content = buildPageContent(pageLines, margin, pageHeight - margin, fontSize, lineHeight);
+        const contentBytes = encoder.encode(content);
+        objects[contentId] = [
+          encoder.encode(`<< /Length ${contentBytes.length} >>\nstream\n`),
+          contentBytes,
+          encoder.encode('endstream')
+        ];
+
+        objectId += 2;
+      });
+
+      objects[2] = encoder.encode(`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${pages.length} >>`);
+      objects[3 + pages.length * 2] = encoder.encode('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+
+      return buildPdf(objects, encoder);
+    }
+
+    function paginate(lines, maxChars, maxLines) {
+      const allLines = [];
+      lines.forEach((line) => {
+        wrapLine(sanitizePdfText(line), maxChars).forEach(wrapped => allLines.push(wrapped));
+      });
+
+      const pages = [];
+      for (let i = 0; i < allLines.length; i += maxLines) {
+        pages.push(allLines.slice(i, i + maxLines));
+      }
+
+      return pages.length ? pages : [['']];
+    }
+
+    function wrapLine(line, maxChars) {
+      if (!line) return [''];
+      const words = line.split(' ');
+      const lines = [];
+      let current = '';
+
+      words.forEach((word) => {
+        const next = current ? `${current} ${word}` : word;
+        if (next.length > maxChars && current) {
+          lines.push(current);
+          current = word;
+        } else {
+          current = next;
+        }
+      });
+
+      if (current) lines.push(current);
+      return lines;
+    }
+
+    function buildPageContent(lines, x, firstY, fontSize, lineHeight) {
+      let y = firstY;
+      const content = ['BT', `/F1 ${fontSize} Tf`, `${x} ${y} Td`];
+
+      lines.forEach((line, index) => {
+        if (index > 0) {
+          content.push(`0 -${lineHeight} Td`);
+        }
+        content.push(`(${escapePdfText(line)}) Tj`);
+        y -= lineHeight;
+      });
+
+      content.push('ET');
+      return `${content.join('\n')}\n`;
+    }
+
+    function buildPdf(objects, encoder) {
+      const parts = [encoder.encode('%PDF-1.4\n%contract-generator\n')];
+      const offsets = [0];
+      let position = byteLength(parts);
+
+      for (let i = 1; i < objects.length; i += 1) {
+        offsets[i] = position;
+        parts.push(encoder.encode(`${i} 0 obj\n`));
+        pushObject(parts, objects[i]);
+        parts.push(encoder.encode('\nendobj\n'));
+        position = byteLength(parts);
+      }
+
+      const xrefStart = position;
+      let xref = `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+      for (let i = 1; i < objects.length; i += 1) {
+        xref += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+      }
+      xref += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+      parts.push(encoder.encode(xref));
+
+      return new Blob(parts, { type: 'application/pdf' });
+    }
+
+    function pushObject(parts, object) {
+      if (Array.isArray(object)) {
+        object.forEach(part => parts.push(part));
+      } else {
+        parts.push(object);
+      }
+    }
+
+    function byteLength(parts) {
+      return parts.reduce((total, part) => total + part.length, 0);
+    }
+
+    function showPdf(blob, name) {
+      clearPdf();
+      currentPdfUrl = URL.createObjectURL(blob);
+      currentPdfFile = new File([blob], name, { type: 'application/pdf' });
+      downloadLink.href = currentPdfUrl;
+      downloadLink.download = name;
+      openLink.href = currentPdfUrl;
+      pdfFrame.src = currentPdfUrl;
+      pdfFrame.classList.add('show');
+      setPdfReady(true);
+      updateSupportMessage();
+    }
+
+    function clearPdf() {
+      if (currentPdfUrl) {
+        URL.revokeObjectURL(currentPdfUrl);
+      }
+
+      currentPdfUrl = '';
+      currentPdfFile = null;
+      downloadLink.removeAttribute('href');
+      openLink.removeAttribute('href');
+      pdfFrame.removeAttribute('src');
+      pdfFrame.classList.remove('show');
+      setPdfReady(false);
+    }
+
+    function setPdfReady(isReady) {
+      shareBtn.disabled = !isReady;
+      toggleLink(downloadLink, isReady);
+      toggleLink(openLink, isReady);
+    }
+
+    function toggleLink(link, isReady) {
+      link.classList.toggle('disabled', !isReady);
+      link.setAttribute('aria-disabled', String(!isReady));
+    }
+
+    async function sharePdf(file) {
+      if (!navigator.share) return 'unsupported';
+
+      const shareData = {
+        files: [file],
+        title: 'Contrato em PDF',
+        text: 'Segue o contrato em PDF.'
+      };
+
+      if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+        return 'unsupported';
+      }
+
+      try {
+        await navigator.share(shareData);
+        return 'shared';
+      } catch (error) {
+        return error.name === 'AbortError' ? 'cancelled' : 'unsupported';
+      }
+    }
+
+    function updateSupportMessage() {
+      supportText.classList.remove('warn');
+
+      if (!window.isSecureContext) {
+        supportText.textContent = 'Para voz e compartilhamento no celular, publique em HTTPS. GitHub Pages funciona.';
+        supportText.classList.add('warn');
+        return;
+      }
+
+      if (!recognition) {
+        supportText.textContent = 'Neste navegador, toque no campo de texto e use o microfone do teclado do celular.';
+        supportText.classList.add('warn');
+        return;
+      }
+
+      if (currentPdfFile && navigator.canShare && !navigator.canShare({ files: [currentPdfFile] })) {
+        supportText.textContent = 'Este navegador nao aceita compartilhar PDF direto. Use Salvar PDF.';
+        supportText.classList.add('warn');
+        return;
+      }
+
+      supportText.textContent = 'No celular, fale o combinado e compartilhe o PDF pelo WhatsApp.';
+    }
+
+    function getShareFallbackMessage() {
+      if (!window.isSecureContext) {
+        return 'O celular bloqueou porque a pagina nao esta em HTTPS. Publique no GitHub Pages e tente pelo link HTTPS.';
+      }
+
+      return 'Este navegador nao compartilha PDF direto. Aperte Salvar PDF e envie pelo WhatsApp.';
+    }
+
+    function setIfEmpty(input, value) {
+      if (!input.value.trim() && value) {
+        input.value = value;
+      }
+    }
+
+    function normalizeSpaces(text) {
+      return text.replace(/\s+/g, ' ').trim();
+    }
+
+    function trimPunctuation(text) {
+      return normalizeSpaces(text).replace(/^[,.;:\-\s]+|[,.;:\-\s]+$/g, '');
+    }
+
+    function removeAccents(text) {
+      return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function sanitizePdfText(text) {
+      return removeAccents(String(text))
+        .replace(/[“”]/g, '"')
+        .replace(/[‘’]/g, "'")
+        .replace(/[^\x20-\x7E]/g, ' ');
+    }
+
+    function escapePdfText(text) {
+      return text.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+    }
+
+    function cleanFileName(name) {
+      return removeAccents(name)
+        .replace(/[^a-z0-9_-]+/gi, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 80);
+    }
+
+    function showError(message) {
+      statusText.textContent = message;
+      statusText.classList.add('error');
+    }
+
+    function clearMessage() {
+      statusText.classList.remove('error');
+    }
+  </script>
+</body>
+</html>
